@@ -1,0 +1,7 @@
+{
+  "name": "garage-manage",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
