@@ -3,6 +3,7 @@ Garage-Manage Pico Controller
 Raspberry Pi Pico W での距離センサー使用および、Web RPC構築
 """
 
+import gc
 import micropython
 import math
 from machine import Pin, Timer
@@ -151,26 +152,34 @@ def getDistance(timer):
 async def distance_loop():
     print('start distance_loop')
     
+    global PICO_ID
     loop_count = 0
     send_count = 0
+    auth = False
 
     current_distance = 0
     while True:
         loop_count += 1
-        new_distance = await get_distance()
-        print("new distance" , new_distance)
-        if abs(current_distance - new_distance) > 100:
-            send_count += 1
-            current_distance = new_distance
-            # Change the URL to your own server, IFTTT, Slack, etc.
-            print('distance:', current_distance, 'mm')
-            #response = firebase.CallFunction('pico',
-            #                                 {'picoId': PICO_ID,
-            #                                  'shutter': current_distance,
-            #                                  'light': toggle[BTN_LIGHT],
-            #                                  'fan': toggle[BTN_FAN]})
-            #print(response.content)
-            #response.close()
+        if auth:
+            new_distance = await get_distance()
+            print("new distance" , new_distance)
+            if abs(current_distance - new_distance) > 100:
+                send_count += 1
+                current_distance = new_distance
+                # Change the URL to your own server, IFTTT, Slack, etc.
+                print('distance:', current_distance, 'mm')
+                response = firebase.CallFunction('pico',
+                                                 {'picoId': PICO_ID,
+                                                  'shutter': 0,
+                                                  'light': 0,
+                                                  'fan': 0})
+                if response == None:
+                    print('None')
+                else:
+                    print(response.contents)
+                    response.close()
+        else:
+            auth = firebase.Authenticate();
             
         print("loop: ", loop_count, " send: ", send_count)
         await uasyncio.sleep(10)
@@ -215,6 +224,7 @@ async def run_web_server():
     app.run(port=80)
 
 async def main():
+    global PICO_ID
     wlan = await network_utils.prepare_wifi()
     mac = wlan.config('mac')
     PICO_ID = '{:012x}'.format(int.from_bytes(mac, 'big'))
@@ -222,6 +232,7 @@ async def main():
     ip = wlan.ifconfig()[0]
     print('Get Distance: http://{}/light/on'.format(ip))
 
+    print(gc.mem_free())
     firebase.Authenticate();
     
     uasyncio.create_task(distance_loop())

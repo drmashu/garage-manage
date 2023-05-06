@@ -13,7 +13,7 @@ ExpiresIn = 0
 認証処理
 """
 def Authenticate():
-    res = requests.post('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + secrets.API_KEY,
+    res = requests.post('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + secrets.FB_API_KEY,
                          headers = {'content-type': 'application/json'},
                          data = ujson.dumps({'email': secrets.FB_EMAIL, 'password': secrets.FB_PASSWORD, 'returnSecureToken': True}))
     print('RESULT code: {}'.format(res.status_code))
@@ -30,7 +30,7 @@ def Authenticate():
 トークンリフレッシュ
 """
 def RefreshToken():
-    res = requests.post('https://securetoken.googleapis.com/v1/token?key=' + secrets.API_KEY,
+    res = requests.post('https://securetoken.googleapis.com/v1/token?key=' + secrets.FB_API_KEY,
                          headers = {'content-type': 'application/x-www-form-urlencoded'},
                          data = 'grant_type=refresh_token&refresh_token=' + RefreshToken)
     if (res.status_code == 200):

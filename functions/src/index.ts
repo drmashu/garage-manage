@@ -17,17 +17,19 @@ functions.region("asia-northeast1").https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "auth error");
   }
-  functions.logger.info("update pico id : " + data.picoId);
-  const docRef = store.collection("picos").doc(data.picoId);
+  functions.logger.info("data : " + JSON.stringify(data));
+  functions.logger.info("context : " + JSON.stringify(context));
+  const {picoId, shutter, light, fan} = data;
+  const {rawRequest} = context;
+  functions.logger.info("update pico id : " + picoId);
+  const docRef = store.collection("picos").doc(picoId);
 
   const doc = await docRef.get();
   let bottom = Number(doc.get("bottom"));
-  bottom = bottom < data.shutter ? data.shutter : bottom;
+  bottom = bottom < shutter ? shutter : bottom;
   let top = Number(doc.get("top"));
-  top = top > data.shutter ? data.shutter : top;
-  const present = (data.shutter - top) / (bottom - top) * 100;
-  const light = data.light;
-  const fan = data.fan;
+  top = top > shutter ? shutter : top;
+  const present = (shutter - top) / (bottom - top) * 100;
 
   docRef.update({
     "top": top,
@@ -35,7 +37,7 @@ functions.region("asia-northeast1").https.onCall(async (data, context) => {
     "present": present,
     "light": light,
     "fan": fan,
-    "ip": context.rawRequest.ip,
+    "ip": rawRequest.ip,
   });
   return {response: "OK"};
 });
@@ -46,5 +48,4 @@ functions.region("asia-northeast1").https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "auth error");
   }
-
 });
